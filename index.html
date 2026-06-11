@@ -521,6 +521,8 @@ function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
 function timeAgo(ts){var s=Math.floor((Date.now()-ts)/1000);if(s<60)return 'just now';var mn=Math.floor(s/60);if(mn<60)return mn+'m ago';var hr=Math.floor(mn/60);if(hr<24)return hr+'h ago';return Math.floor(hr/24)+'d ago';}
+window.addEventListener('error',function(ev){try{toast('\u26a0 '+((ev.error&&ev.error.message)||ev.message||'Script error'));}catch(e){}});
+window.addEventListener('unhandledrejection',function(ev){try{toast('\u26a0 '+((ev.reason&&ev.reason.message)||'Async error'));}catch(e){}});
 function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.getElementById('app').appendChild(t);setTimeout(function(){t.classList.add('show');},10);setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},320);},1900);}
 function isOwner(){return !!(currentUser&&currentUser.role==='master');}
 function getThemePref(){return 'light';}                 // theme locked to light for now
@@ -910,14 +912,7 @@ function go(tab,instant,parent){
 }
 function back(){go('today');}
 
-function manageFab(tab){
-  var old=document.querySelector('.fab');if(old)old.remove();
-  if(tab&&ADDABLE[tab]){
-    var fab=document.createElement('button');fab.className='fab';fab.innerHTML=icon('plus',26,2.6);
-    fab.onclick=function(){};
-    document.getElementById('app').appendChild(fab);
-  }
-}
+function manageFab(tab){var old=document.querySelector('.fab');if(old)old.remove();}
 async function refreshScreen(){
   if(!current)return;var sc=current.el.scrollTop;
   var html=await renderTab(current.tab);if(current.el&&current.el.parentNode)current.el.innerHTML=html;
@@ -1187,6 +1182,7 @@ function rcFmtDate(iso){return new Date(iso+'T00:00:00').toLocaleDateString(unde
 RC_RACES.forEach(function(r){r._d=rcNextDate(r.d);});
 RC_RACES.sort(function(a,b){return a._d<b._d?-1:(a._d>b._d?1:0);});
 
+var rcTab='today';
 var rcScreen='goal',rcBack=[],rcPreview=null,rcReconfig=false,rcTab='today',rcOpenWeek=null;
 var rcWeekdays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 function rcToggleDay(d){rcSetup.daysSel=rcSetup.daysSel||[];var i=rcSetup.daysSel.indexOf(d);if(i>=0)rcSetup.daysSel.splice(i,1);else rcSetup.daysSel.push(d);refreshScreen();}
