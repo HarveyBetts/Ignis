@@ -464,6 +464,46 @@ header .logo{display:none !important;}
 .ig2-line{width:0;height:2.5px;border-radius:2px;background:linear-gradient(90deg,transparent,#FFC400,#FF9A00,transparent);margin-top:20px;position:relative;z-index:3;box-shadow:0 0 16px rgba(255,179,0,.6);animation:ig2R .6s cubic-bezier(.4,0,.2,1) 1.05s forwards;}
 @keyframes ig2R{to{width:196px;}}
 
+
+/* ===================== MOTION SYSTEM ===================== */
+:root{--spring:cubic-bezier(.34,1.56,.64,1);--swift:cubic-bezier(.16,1,.3,1);}
+@keyframes chorIn{from{opacity:0;transform:translateY(16px) scale(.97);filter:blur(3px);}}
+.chor{animation:chorIn .55s var(--spring) backwards;}
+@keyframes arcIn{from{stroke-dasharray:0 100;}}
+.arc-anim{animation:arcIn 1.15s cubic-bezier(.3,1.25,.35,1) .12s backwards;}
+@keyframes barIn{from{width:0;}}
+#app .rcv-bar i{animation:barIn .9s var(--swift) .25s backwards;}
+#app .rcv-bar{position:relative;}
+#app .rcv-bar::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.35) 50%,transparent 68%);transform:translateX(-130%);animation:sheen 1.1s ease .85s 1;pointer-events:none;}
+@keyframes sheen{to{transform:translateX(130%);}}
+#app .rcv-pbtn{transition:transform .12s var(--swift),box-shadow .15s,filter .15s;}
+#app .rcv-pbtn:active{transform:translateY(2px) scale(.98);filter:brightness(1.12);box-shadow:0 4px 12px -6px rgba(255,170,0,.55);}
+#app .rcv-gbtn:active,#app .btn:active{transform:translateY(1px) scale(.985);}
+#app .navi{transition:transform .15s var(--spring),color .15s;}
+#app .navi:active{transform:scale(.86);}
+#app .navi.on svg{animation:navPop .4s var(--spring);}
+@keyframes navPop{45%{transform:scale(1.3) translateY(-2px);}}
+.toast{border:1px solid rgba(255,179,0,.22);background:#17120A;box-shadow:0 18px 44px -18px rgba(0,0,0,.95),0 0 24px -8px rgba(255,170,0,.35);font-weight:600;}
+.toast.show{animation:toastPop .5s var(--spring);}
+@keyframes toastPop{0%{transform:translateX(-50%) translateY(16px) scale(.8);opacity:0;}}
+/* ---- celebration ---- */
+.cele{position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,3,0,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:fade .22s ease;cursor:pointer;}
+.cele-num{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:56px;letter-spacing:-.04em;color:var(--accent);text-shadow:0 0 44px rgba(255,170,0,.65);animation:celePop .65s var(--spring);}
+.cele-t{font-family:'Archivo',sans-serif;font-stretch:92%;font-weight:800;font-size:24px;letter-spacing:-.01em;color:var(--ink);margin-top:8px;animation:chorIn .5s var(--spring) .14s backwards;}
+.cele-s{color:var(--sub);font-size:13.5px;margin-top:9px;animation:chorIn .5s var(--spring) .26s backwards;}
+@keyframes celePop{0%{transform:scale(.35);opacity:0;}62%{transform:scale(1.14);}100%{transform:scale(1);opacity:1;}}
+.spk{position:absolute;left:50%;top:45%;width:7px;height:7px;border-radius:2px;background:linear-gradient(135deg,#FFC400,#FF9A00);box-shadow:0 0 12px rgba(255,170,0,.8);animation:spkFly .95s var(--swift) forwards;}
+@keyframes spkFly{0%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.15) rotate(200deg);opacity:0;}}
+
+
+/* ===== layout hard-pin: app cannot end above the screen edge ===== */
+html,body{height:100%;}
+#app{position:fixed !important;inset:0 !important;height:auto !important;max-width:none !important;width:auto !important;margin:0 !important;}
+@media(min-width:900px){
+  #app{left:50% !important;right:auto !important;width:560px !important;transform:translateX(-50%);}
+}
+header{padding-top:max(16px,env(safe-area-inset-top)) !important;}
+
 </style>
 </head>
 <body>
@@ -871,7 +911,17 @@ function buildScreen(tab){
   el.innerHTML=skeletonHTML();loadAndRender(tab,el);
   return el;
 }
-async function loadAndRender(tab,el){var html=await renderTab(tab);if(el&&el.parentNode){el.innerHTML=html;countUpScan(el);}}
+function rollNum(el){try{var raw=(el.textContent||'').trim();var mm=raw.match(/^(\d[\d,]*)$/);if(!mm)return;var target=parseInt(mm[1].replace(/,/g,''),10);if(!(target>0)||target>99999)return;var t0=null;el.textContent='0';function step(ts){if(!t0)t0=ts;var p=Math.min(1,(ts-t0)/850);var v=Math.round(target*(1-Math.pow(1-p,3)));el.textContent=v.toLocaleString();if(p<1)requestAnimationFrame(step);}requestAnimationFrame(step);}catch(e){}}
+function choreograph(root){try{
+  var els=root.querySelectorAll('.rcv-c,.rcv-tile,.rcv-iv,.rcv-run,.rcv-wk');
+  var n=Math.min(els.length,14);
+  for(var i=0;i<n;i++){els[i].classList.add('chor');els[i].style.animationDelay=(i*0.06)+'s';}
+  var arcs=root.querySelectorAll('circle[stroke="url(#igg)"]');
+  for(var j=0;j<arcs.length;j++){arcs[j].classList.add('arc-anim');}
+  var bigs=root.querySelectorAll('.rcv-ring .big');
+  for(var k=0;k<bigs.length;k++){rollNum(bigs[k]);}
+}catch(e){}}
+async function loadAndRender(tab,el){var html=await renderTab(tab);if(el&&el.parentNode){el.innerHTML=html;countUpScan(el);choreograph(el);}}
 
 function mountNav(){
   if(document.getElementById('bottomNav'))return;
@@ -915,7 +965,7 @@ function back(){go('today');}
 function manageFab(tab){var old=document.querySelector('.fab');if(old)old.remove();}
 async function refreshScreen(){
   if(!current)return;var sc=current.el.scrollTop;
-  var html=await renderTab(current.tab);if(current.el&&current.el.parentNode)current.el.innerHTML=html;
+  var html=await renderTab(current.tab);if(current.el&&current.el.parentNode){current.el.innerHTML=html;countUpScan(current.el);choreograph(current.el);}
   current.el.scrollTop=sc;manageFab(current.tab);
 }
 
@@ -1428,7 +1478,7 @@ async function rcBuildFromSetup(){
 async function rcCommitPlan(){
   var P=rcPreview;if(!P)return;var m=P.meta;
   await setRunPlan({goal:m.goal,goal_type:m.goal_type,target_date:m.target_date,days_per_week:m.days_per_week,level:m.level,baseline:'',plan:P.plan});
-  rcPreview=null;rcReconfig=false;rcScreen='goal';rcBack=[];rcStep=0;rcSetup={};brainStale();await refreshScreen();toast('Plan started \u2713');
+  rcPreview=null;rcReconfig=false;rcScreen='goal';rcBack=[];rcStep=0;rcSetup={};brainStale();await refreshScreen();celebrate('','Plan locked in','Your training block is live \u2014 see Today');
 }
 function garminCard(){
   return '<div class="card" style="display:flex;align-items:center;gap:12px"><div class="chip sm" style="--tc:#1F9D6B">'+icon('trend',16,2.2)+'</div><div style="flex:1"><div class="rt">Import your Garmin runs</div><div class="rs">Garmin Connect \u2192 export activities (CSV) \u2192 upload. I\u2019ll plan from your real training.</div></div><button class="tbtn add" onclick="rcImportGarmin()">Import</button></div>';
@@ -1665,6 +1715,14 @@ function rcRebuildPhases(plan,raceISO){
   plan.phases=[{name:'Base'},{name:'Build'},{name:'Peak'},{name:'Taper'}];
   plan.weeks=weeks;plan.detail=plan.detail||{days:[]};plan.detail.week=1;
 }
+function celebrate(big,title,sub){try{
+  var app=document.getElementById('app');var c=document.createElement('div');c.className='cele';
+  var spk='';for(var i=0;i<22;i++){var a=Math.random()*6.283;var d=90+Math.random()*160;spk+='<i class="spk" style="--dx:'+Math.round(Math.cos(a)*d)+'px;--dy:'+Math.round(Math.sin(a)*d)+'px;animation-delay:'+(Math.random()*0.16).toFixed(2)+'s"></i>';}
+  c.innerHTML=spk+(big?'<div class="cele-num">'+esc(String(big))+'</div>':'')+'<div class="cele-t">'+esc(title)+'</div>'+(sub?'<div class="cele-s">'+esc(sub)+'</div>':'');
+  c.onclick=function(){if(c.parentNode)c.parentNode.removeChild(c);};
+  app.appendChild(c);
+  setTimeout(function(){if(c.parentNode){c.style.transition='opacity .3s';c.style.opacity='0';setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},320);}},1800);
+}catch(e){}}
 async function rcRaceSheet(){
   var p=await getRunPlan();var plan=(p&&p.plan)||{};
   var curDist=(plan.race_distance&&plan.race_distance!=='none')?plan.race_distance:'';
@@ -1694,7 +1752,7 @@ async function rcSaveRace(){
   rcRebuildPhases(p.plan,date);
   await setRunPlan(p);if(typeof brainStale==='function')brainStale();
   closeOverlay();await refreshScreen();
-  toast('Race set \u2014 your plan now targets '+dist);
+  celebrate(dist,'Race targeted','The whole block now peaks on race day');
 }
 
 function runPlanView(p,logs){
@@ -1962,29 +2020,71 @@ async function renderFuel(){
   return '<div class="stack rcv">'+rcpvCSS()+hero+note+addBtn+list+editLink+'</div>';
 }
 
+var __fuelB64=null;
 async function fuelPhotoPicked(inp){
   var f=inp.files&&inp.files[0];if(!f)return;inp.value='';
-  var box=document.querySelector('#ovl .sheet');if(box)box.innerHTML='<h3>Reading your plate\u2026</h3><p>Estimating calories and macros from the photo.</p><div class="rcv-bar" style="margin-top:14px"><i style="width:60%;animation:igscan 1.2s ease-in-out infinite alternate"></i></div><style>@keyframes igscan{from{width:18%}to{width:88%}}</style>';
   try{
-    var b64=await new Promise(function(res,rej){
+    __fuelB64=await new Promise(function(res,rej){
       var img=new Image();var rd=new FileReader();
-      rd.onload=function(){img.onload=function(){var mx=900;var sc=Math.min(1,mx/Math.max(img.width,img.height));var c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.8).split(',')[1]);};img.onerror=rej;img.src=rd.result;};
+      rd.onload=function(){img.onload=function(){var mx=1280;var sc=Math.min(1,mx/Math.max(img.width,img.height));var c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.82).split(',')[1]);};img.onerror=rej;img.src=rd.result;};
       rd.onerror=rej;rd.readAsDataURL(f);
     });
-    var ans=await askAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Estimate this meal for a runner\u2019s food log. Reply with ONLY a fenced json object: ```json\n{"items":[{"item":"short name","kcal":0,"protein":0,"carbs":0,"fat":0}]}\n``` Use realistic portions from what you can see. 1-4 items max.'}]}],'You are a precise sports nutritionist estimating calories and macros from a meal photo.',500);
-    var jm=String(ans).match(/```json[\s\S]*?```/i);var raw=jm?jm[0].replace(/```json|```/gi,''):ans;
+  }catch(e){toast('Couldn\u2019t read that photo');return;}
+  fuelPhotoAnalyse('');
+}
+async function fuelPhotoAnalyse(hint){
+  var box=document.querySelector('#ovl .sheet');
+  if(box)box.innerHTML='<h3>Reading your plate\u2026</h3><p>Looking at portions, sauces and sides \u2014 a few seconds.</p><div class="rcv-bar" style="margin-top:14px"><i style="width:60%;animation:igscan 1.2s ease-in-out infinite alternate"></i></div><style>@keyframes igscan{from{width:18%}to{width:88%}}</style>';
+  try{
+    var instr='Estimate this meal for a runner\u2019s food log.\n'
+      +'Method: use visual scale cues (plate or bowl diameter, cutlery, hands, cans or packaging) to judge portion size. Count duplicates (e.g. 2 slices, 3 dumplings). Include hidden calories you can infer: cooking oil or butter, dressings, sauces, cheese, sugar in drinks. Include visible drinks. Prefer realistic midpoint values, not lowballs.\n'
+      +(hint?('User hint about this meal: "'+hint+'". Trust the hint over your guess where they conflict.\n'):'')
+      +'Reply with ONLY a fenced json object, no prose:\n```json\n{"items":[{"item":"short name","portion":"e.g. ~300 g / 1 medium bowl / 2 slices","kcal":0,"protein":0,"carbs":0,"fat":0,"conf":0.0}]}\n```\n1 to 6 items. conf is 0\u20131 confidence.';
+    var ans=await askAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:__fuelB64}},{type:'text',text:instr}]}],'You are a meticulous sports dietitian. You estimate calories and macros from meal photos using visual scale references, and you never forget oils, dressings and drinks.',700);
+    var txt=(ans&&ans.text)||String(ans||'');
+    var jm=txt.match(/```json[\s\S]*?```/i);var raw=jm?jm[0].replace(/```json|```/gi,''):txt;
+    var mObj=raw.match(/\{[\s\S]*\}/);if(mObj)raw=mObj[0];
     var d=JSON.parse(raw.trim());
     if(!d||!d.items||!d.items.length)throw new Error('no items');
+    d.items.forEach(function(it){it._mult=1;it._skip=false;});
     window.__fuelShot=d.items;
-    if(box)box.innerHTML='<h3>Here\u2019s what I see</h3><p>Tap to remove anything that\u2019s wrong, then add.</p><div id="shotList">'+d.items.map(function(it,ix){return '<div class="rcv-iv" id="shot'+ix+'" style="display:flex;align-items:center;gap:11px;padding:12px 13px;margin-top:8px;border:1px solid var(--line);cursor:pointer" onclick="fuelShotDrop('+ix+')"><div style="flex:1;font-size:13.5px;font-weight:600;color:var(--ink)">'+esc(it.item)+'</div><div class="rcv-num" style="font-size:13px;color:var(--sub)">'+Math.round(it.kcal)+' kcal</div><span style="color:var(--faint)">\u00d7</span></div>';}).join('')+'</div><button class="rcv-pbtn" style="width:100%;margin-top:16px" onclick="fuelShotAdd()">Add to today</button><button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="closeOverlay()">Cancel</button>';
+    fuelShotRender();
   }catch(e){toast('Couldn\u2019t read the photo \u2014 describe it instead');closeOverlay();fuelAddSheet();}
 }
-function fuelShotDrop(ix){var el=document.getElementById('shot'+ix);if(el)el.style.display='none';if(window.__fuelShot&&window.__fuelShot[ix])window.__fuelShot[ix]._skip=true;}
+function fuelShotKcal(){var t=0;(window.__fuelShot||[]).forEach(function(it){if(!it._skip)t+=Math.round((it.kcal||0)*it._mult);});return t;}
+function fuelShotRender(){
+  var box=document.querySelector('#ovl .sheet');if(!box)return;
+  var items=window.__fuelShot||[];
+  var rows=items.map(function(it,ix){
+    if(it._skip)return '';
+    var conf=(typeof it.conf==='number'&&it.conf<0.55)?'<span style="font-size:10px;color:var(--warn);font-weight:700;letter-spacing:.06em;margin-left:7px">CHECK ME</span>':'';
+    var chips=[['S',0.7],['M',1],['L',1.35]].map(function(c){var on=Math.abs(it._mult-c[1])<0.01;return '<button class="rc-dist'+(on?' on':'')+'" style="flex:none;padding:7px 13px;font-size:11.5px" onclick="fuelShotSize('+ix+','+c[1]+')">'+c[0]+'</button>';}).join('');
+    return '<div class="rcv-iv" style="display:block;padding:13px;margin-top:9px;border:1px solid var(--line)">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:var(--ink)">'+esc(it.item)+conf+'</div>'
+      +(it.portion?'<div style="font-size:11.5px;color:var(--sub);margin-top:2px">'+esc(it.portion)+'</div>':'')
+      +'</div><div class="rcv-num" id="shotk'+ix+'" style="font-size:14px;color:var(--accent);font-weight:700;flex:none">'+Math.round((it.kcal||0)*it._mult)+' kcal</div>'
+      +'<button onclick="fuelShotDrop('+ix+')" style="flex:none;background:none;border:none;color:var(--faint);font-size:15px;cursor:pointer;padding:0 0 0 6px">\u00d7</button></div>'
+      +'<div style="display:flex;gap:7px;margin-top:10px">'+chips+'<span style="flex:1"></span></div>'
+      +'</div>';
+  }).join('');
+  box.innerHTML='<h3>Here\u2019s what I see</h3><p>Adjust portions with S / M / L, bin anything wrong, or add a hint.</p>'
+    +'<div id="shotList">'+rows+'</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2)"><span class="rcv-lbl">Total</span><span class="rcv-num" id="shotTotal" style="font-size:17px;font-weight:800;color:var(--accent)">'+fuelShotKcal()+' kcal</span></div>'
+    +'<button class="rcv-pbtn" style="width:100%;margin-top:14px" onclick="fuelShotAdd()">Add to today</button>'
+    +'<button class="rcv-link" style="width:100%;margin-top:11px;text-align:center" onclick="fuelShotHint()">Not quite right? Add a hint \u2192</button>'
+    +'<div id="shotHint" style="display:none;margin-top:11px"><input id="shotHintIn" class="rc-in" placeholder="e.g. that\u2019s oat milk, and two sausages"><button class="btn btn-primary" style="width:100%;margin-top:9px" onclick="fuelPhotoAnalyse(document.getElementById(\'shotHintIn\').value||\'\')">Re-analyse with hint</button></div>'
+    +'<button class="btn btn-ghost" style="width:100%;margin-top:9px" onclick="closeOverlay()">Cancel</button>';
+}
+function fuelShotSize(ix,f){var it=(window.__fuelShot||[])[ix];if(!it)return;it._mult=f;fuelShotRender();}
+function fuelShotHint(){var h=document.getElementById('shotHint');if(h)h.style.display='block';var i=document.getElementById('shotHintIn');if(i)i.focus();}
+function fuelShotDrop(ix){var it=(window.__fuelShot||[])[ix];if(it)it._skip=true;fuelShotRender();}
 async function fuelShotAdd(){
   var items=(window.__fuelShot||[]).filter(function(x){return !x._skip;});
   if(!items.length){closeOverlay();return;}
-  for(var i=0;i<items.length;i++){var it=items[i];await addFuelItem({day:localDay(),item:it.item,kcal:Math.round(it.kcal||0),protein:Math.round(it.protein||0),carbs:Math.round(it.carbs||0),fat:Math.round(it.fat||0)});}
-  closeOverlay();toast('Added '+items.length+' item'+(items.length>1?'s':'')+' \u2713');refreshScreen();
+  var kc=0;
+  for(var i=0;i<items.length;i++){var it=items[i];var m=it._mult||1;var k=Math.round((it.kcal||0)*m);kc+=k;
+    await addFuelItem({day:localDay(),item:it.item+(m!==1?(m<1?' (small)':' (large)'):''),kcal:k,protein:Math.round((it.protein||0)*m),carbs:Math.round((it.carbs||0)*m),fat:Math.round((it.fat||0)*m)});}
+  closeOverlay();celebrate(kc+' kcal','Meal logged',items.length+' item'+(items.length>1?'s':'')+' from your photo');refreshScreen();
 }
 function fuelAddSheet(){
   var o=document.createElement('div');o.className='overlay';o.id='ovl';o.onclick=closeOverlay;
